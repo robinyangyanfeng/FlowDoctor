@@ -1,0 +1,11 @@
+{
+  "log_path": "/home/yangyf/FlowDoctor/sample.log",
+  "exists": true,
+  "line_count": 4,
+  "error_lines": [
+    "Traceback (most recent call last):",
+    "ModuleNotFoundError: No module named 'requests'",
+    "Build failed at step 2"
+  ],
+  "suspected_root_cause": "missing Python dependency"
+}

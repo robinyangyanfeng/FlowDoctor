@@ -1,0 +1,23 @@
+[project]
+name = "flowdoctor"
+version = "0.1.0"
+description = "Turn hard-to-run repos into AI-ready workspaces."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic",
+    "rich",
+    "typer",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+]
+
+[project.scripts]
+flowdoctor = "flowdoctor:main"
+
+[build-system]
+requires = ["uv_build>=0.10.11,<0.11.0"]
+build-backend = "uv_build"
