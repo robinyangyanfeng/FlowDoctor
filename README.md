@@ -2,44 +2,26 @@
 
 Turn hard-to-run repos into AI-ready workspaces.
 
-## What it does
+## What FlowDoctor means
 
-FlowDoctor is an experimental Python CLI for preparing local repositories for AI-assisted debugging.
+FlowDoctor is a local-first CLI that prepares hard-to-run repositories for debugging and future AI-assisted workflows by producing three concrete artifacts: a repo profile, a failure bundle, and a minimal devcontainer draft.
 
-Current implemented commands:
-- `flowdoctor scan [PATH]`
-- `flowdoctor diagnose LOG_FILE`
-- `flowdoctor env draft [PATH]`
+It is a preparation layer, not a full automation layer. The goal is to make messy local state easier to understand, reproduce, and hand off.
 
-Current generated outputs:
-- `repo_profile.json`
-- `failure_bundle.json`
-- `.devcontainer/devcontainer.json`
+## Why this project exists
 
-## Why it exists
+Many repositories fail before useful debugging even starts. Environment setup drifts, dependency assumptions are unclear, entry points are hard to locate, and logs are noisy.
 
-Many local repos are hard to run consistently: environments drift, logs are noisy, and critical setup/debugging context is scattered. AI tools also work better with structured, bounded context than raw repository dumps.
+That hurts real work: people spend time reconstructing context, and AI tools receive unstructured input. FlowDoctor exists to structure the problem first so debugging can start from evidence instead of guesswork.
 
-FlowDoctor focuses on practical first steps: detect basic repo shape, structure failure evidence, and draft a minimal devcontainer config.
+## What it does today
 
-## Current features
+- `flowdoctor scan [PATH]`: reads a target repository directory; outputs JSON to stdout and `repo_profile.json` inside the target repository; useful for creating a quick structured project profile for tooling and handoff.
+- `flowdoctor diagnose LOG_FILE`: reads a log file; outputs JSON to stdout and `failure_bundle.json` in the current working directory; useful for turning noisy failures into structured debugging evidence.
+- `flowdoctor env draft [PATH]`: reads a target repository directory; outputs JSON to stdout and `<target repo>/.devcontainer/devcontainer.json`; useful for creating a minimal reproducible environment starting point.
 
-- `scan [PATH]`
-  - Scans a target repo directory.
-  - Infers `repo_type` using marker files (ordered rules below).
-  - Prints pretty JSON to stdout.
-  - Writes `repo_profile.json` into the target repo directory.
-- `diagnose LOG_FILE`
-  - Reads a log file as UTF-8.
-  - Extracts a minimal structured failure bundle.
-  - Prints pretty JSON to stdout.
-  - Writes `failure_bundle.json` in the current working directory.
-- `env draft [PATH]`
-  - Generates a minimal devcontainer config.
-  - Prints pretty JSON to stdout.
-  - Writes `<target repo>/.devcontainer/devcontainer.json`.
+Current `scan` repo type inference rules (in order):
 
-Repo type inference rules used by `scan` (in order):
 1. `pyproject.toml` -> `python`
 2. `requirements.txt` -> `python`
 3. `package.json` -> `node`
@@ -49,14 +31,17 @@ Repo type inference rules used by `scan` (in order):
 7. `Makefile` -> `generic-make`
 8. otherwise -> `unknown`
 
-Current `env draft` Python-oriented output uses:
-- image: `mcr.microsoft.com/devcontainers/python:1-3.12-bullseye`
-- VS Code extensions including Python and Ruff
-- `postCreateCommand: "uv sync"`
+## Why these outputs matter
+
+- `repo_profile.json`: helps quickly identify what kind of project you are looking at and provides a stable, machine-readable snapshot of repo basics.
+- `failure_bundle.json`: converts raw log noise into structured failure evidence that is easier to inspect, compare, and pass to another person or tool.
+- `.devcontainer/devcontainer.json`: provides a concrete starting point for a reproducible local environment instead of starting from a blank file.
+
+In practice, these artifacts make debugging handoffs cleaner and reduce repeated setup work.
 
 ## Quick start
 
-Assuming you are in this repo and already have `uv` installed:
+Assuming you are already in this repository and already have `uv` installed:
 
 ```bash
 uv sync
@@ -66,11 +51,13 @@ uv run flowdoctor scan .
 
 ## Installation
 
-Current requirements:
+FlowDoctor currently runs from source in this repository.
+
+Requirements:
 - Python 3.12
 - `uv`
 
-This project is currently used from source in this repository.
+Install dependencies:
 
 ```bash
 uv sync
@@ -78,54 +65,68 @@ uv sync
 
 ## Usage
 
-Scan a repository and write `repo_profile.json` into that repository:
+Generate a repo profile:
 
 ```bash
 uv run flowdoctor scan .
 ```
 
-Diagnose a log file and write `failure_bundle.json` into the current directory:
+Creates `./repo_profile.json` in the target repo.
+
+Generate a failure bundle from a log:
 
 ```bash
 uv run flowdoctor diagnose sample.log
 ```
 
-Draft a devcontainer config and write `.devcontainer/devcontainer.json` into the target repository:
+Creates `./failure_bundle.json` in the current working directory.
+
+Draft a minimal devcontainer file:
 
 ```bash
 uv run flowdoctor env draft .
 ```
 
-## Repository structure
-
-- `src/flowdoctor/__init__.py`: Typer CLI app and command implementations.
-- `tests/`: pytest command tests (`scan`, `diagnose`, `env draft`).
-- `pyproject.toml`: project metadata and CLI entrypoint.
+Creates `./.devcontainer/devcontainer.json` in the target repo.
 
 ## Who this is for
 
-- Developers working on hard-to-run local repositories.
-- Systems / infra / compiler / EDA / simulation / AI infra users.
-- Teams that want cleaner, structured debugging inputs for AI tools.
+- Developers dealing with hard-to-run local repositories.
+- Systems, infrastructure, compiler, EDA, simulation, and AI-infra users who need faster debugging setup.
+- Maintainers who want better structured artifacts for debugging handoff.
 
 ## Current status
 
-FlowDoctor is experimental, early alpha, and not production-ready.
+FlowDoctor is experimental and early alpha.
 
-- Interfaces may change.
-- Current local test status: `7 passed`.
+- Not production-ready.
+- Interface and output details may change.
+- Not all repo types or environments are handled yet.
+- `pytest` passes locally today.
+
+## What FlowDoctor is not
+
+FlowDoctor is not:
+
+- a full bug-fixing agent
+- a complete environment manager
+- an MCP implementation today
+- a hosted remote service
+
+It does not replace coding agents, and it does not automatically reproduce every complex environment.
 
 ## Roadmap
 
 Future work (not implemented yet):
-- Richer repository detection.
-- Better environment drafting.
-- Better failure analysis.
-- Possible future MCP integration.
+
+- richer repo detection
+- better environment drafting
+- better failure analysis
+- future MCP-facing integration
 
 ## Contributing
 
-Contributions are welcome. Open an issue or pull request with a focused proposal.
+Contributions are welcome. Open an issue or pull request with a focused, practical proposal.
 
 ## License
 
