@@ -1,12 +1,14 @@
 # FlowDoctor
 
-Turn hard-to-run repos into AI-ready workspaces.
+Help users understand failures faster through structured failure evidence.
 
 ## What FlowDoctor means
 
-FlowDoctor is a local-first CLI that prepares hard-to-run repositories for debugging and future AI-assisted workflows by producing three concrete artifacts: a repo profile, a failure bundle, and a minimal devcontainer draft.
+FlowDoctor is a local-first CLI for failure analysis. Its primary job is to turn noisy logs into a structured `failure_bundle.json` that is easier to inspect, compare, and hand off.
 
-It is a preparation layer, not a full automation layer. The goal is to make messy local state easier to understand, reproduce, and hand off.
+`scan` and `env draft` are supporting capabilities. They add project context and a minimal environment draft, but they are not the core value of the project.
+
+FlowDoctor is a preparation layer, not a full automation layer. It helps teams move from raw failure output to clear, testable hypotheses.
 
 ## Why this project exists
 
@@ -16,9 +18,10 @@ That hurts real work: people spend time reconstructing context, and AI tools rec
 
 ## What it does today
 
-- `flowdoctor scan [PATH]`: reads a target repository directory; outputs JSON to stdout and `repo_profile.json` inside the target repository; useful for creating a quick structured project profile for tooling and handoff.
-- `flowdoctor diagnose LOG_FILE`: reads a log file; outputs JSON to stdout and `failure_bundle.json` in the current working directory; useful for turning noisy failures into structured debugging evidence.
-- `flowdoctor env draft [PATH]`: reads a target repository directory; outputs JSON to stdout and `<target repo>/.devcontainer/devcontainer.json`; useful for creating a minimal reproducible environment starting point.
+- Primary: `flowdoctor diagnose LOG_FILE` reads a log file and writes `failure_bundle.json` in the current working directory.
+- Supporting: `flowdoctor diagnose LOG_FILE --repo PATH` enriches the failure bundle with repository context (`repo_context`) for clearer debugging handoff.
+- Supporting: `flowdoctor scan [PATH]` writes `repo_profile.json` in the target repository.
+- Supporting: `flowdoctor env draft [PATH]` writes a minimal `.devcontainer/devcontainer.json` draft in the target repository.
 
 Current `scan` repo type inference rules (in order):
 
@@ -33,9 +36,9 @@ Current `scan` repo type inference rules (in order):
 
 ## Why these outputs matter
 
-- `repo_profile.json`: helps quickly identify what kind of project you are looking at and provides a stable, machine-readable snapshot of repo basics.
-- `failure_bundle.json`: converts raw log noise into structured failure evidence that is easier to inspect, compare, and pass to another person or tool.
-- `.devcontainer/devcontainer.json`: provides a concrete starting point for a reproducible local environment instead of starting from a blank file.
+- `failure_bundle.json`: the primary artifact; converts raw log noise into structured failure evidence with classification and next verification steps.
+- `repo_profile.json`: supporting context that helps identify repository shape and likely toolchain.
+- `.devcontainer/devcontainer.json`: a supporting draft for local setup; not a guarantee of full environment reproduction.
 
 In practice, these artifacts make debugging handoffs cleaner and reduce repeated setup work.
 
@@ -81,6 +84,26 @@ uv run flowdoctor diagnose sample.log
 
 Creates `./failure_bundle.json` in the current working directory.
 
+Generate a failure bundle with repository context:
+
+```bash
+uv run flowdoctor diagnose sample.log --repo .
+```
+
+Current `failure_bundle.json` schema includes:
+- `schema_version`
+- `log_path`
+- `exists`
+- `line_count`
+- `failure_stage`
+- `failure_kind`
+- `confidence`
+- `primary_evidence`
+- `supporting_evidence`
+- `suspected_root_cause`
+- `next_verification_steps`
+- `repo_context` (null when `--repo` is not provided; object with `repo_path`, `repo_type`, `has_git`, `has_pyproject` when provided)
+
 Draft a minimal devcontainer file:
 
 ```bash
@@ -115,14 +138,16 @@ FlowDoctor is not:
 
 It does not replace coding agents, and it does not automatically reproduce every complex environment.
 
+Any MCP-facing integration is future-facing only and not implemented in the current CLI.
+
 ## Roadmap
 
-Future work (not implemented yet):
+Priority-ordered roadmap (future work, not implemented yet):
 
-- richer repo detection
-- better environment drafting
-- better failure analysis
-- future MCP-facing integration
+1. Improve failure analysis quality (better heuristics, cleaner evidence selection, and clearer root-cause hypotheses).
+2. Strengthen failure handoff context (better linkage between logs and repository metadata).
+3. Improve env draft usefulness as a starting point without claiming full reproducibility.
+4. Add MCP-facing integration as an export/integration layer after local CLI workflows are stronger.
 
 ## Contributing
 
