@@ -1,0 +1,2 @@
+INFO writing state file
+fatal: Permission denied: '/var/lib/flowdoctor/state.db'

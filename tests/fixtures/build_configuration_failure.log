@@ -1,0 +1,3 @@
+-- Configuring done
+CMake Error at CMakeLists.txt:12 (add_executable):
+  linker command failed with exit code 1
